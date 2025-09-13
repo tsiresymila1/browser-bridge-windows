@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Printer</title>
+    <style>
+       body {
+           margin: 0;
+           padding: 16px;
+           font-family: monospace;
+           background-color: #fefefe;
+           color: #111;
+       }
+
+       h2 {
+           font-size: 16px;
+           margin-top: 20px;
+           margin-bottom: 10px;
+           border-top: 1px solid #000;
+           padding-top: 10px;
+       }
+
+       .button-group {
+           display: flex;
+           flex-direction: column;
+       }
+
+       .button-group button {
+           padding: 12px;
+           margin-bottom: 8px;
+           font-weight: bold;
+           font-size: 14px;
+           background-color: #e0e0e0;
+           border: 1px solid #999;
+           border-radius: 4px;
+           text-align: center;
+       }
+
+       .button-group button:active {
+           background-color: #d0d0d0;
+       }
+
+       #printers button {
+           padding: 10px;
+           margin-bottom: 6px;
+           width: 100%;
+           font-size: 14px;
+       }
+
+       #sms-list {
+           height: 200px;
+           overflow-y: auto;
+           border: 1px solid #000;
+           padding: 10px;
+           background-color: #fafafa;
+           white-space: pre-wrap;
+       }
+
+       @media screen and (min-width: 480px) {
+           .button-group {
+               flex-direction: row;
+               flex-wrap: wrap;
+           }
+
+           .button-group button {
+               width: 48%;
+               margin-right: 4%;
+           }
+
+           .button-group button:nth-child(2n) {
+               margin-right: 0;
+           }
+       }
+   </style>
+</head>
+
+<body>
+<div style="text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 16px;">
+    DEVICE INTERFACE
+</div>
+
+<!-- Interaction Buttons -->
+<div class="button-group">
+    <button onclick="alert(JSON.stringify(Object.keys(window)))">🔍 Verify</button>
+    <button onclick="testCamera()">📸 Test Camera</button>
+    <button onclick="testPhoto()">📸 Pick Photo</button>
+    <button onclick="pickFileAndRead()">📸 Pick File and Read </button>
+    <button onclick="getPrinters()">🖨️ Get Printers</button>
+</div>
+
+<!-- Printer Section -->
+<h2>🖨️ Available Printers</h2>
+<div id="printers"></div>
+
+
+<script>
+       window.addEventListener("flutterInAppWebViewPlatformReady", function () {
+           if (window.WebThermalPrinter && WebThermalPrinter.onPrinterFound) {
+               WebThermalPrinter.onPrinterFound(function (list) {
+                   var printers = document.getElementById("printers");
+                   printers.innerHTML = '';
+                   for (var i = 0; i < list.length; i++) {
+                       var p = list[i];
+                       var btn = document.createElement('button');
+                       btn.innerText = "🖨️ " + ((p.name !== undefined && p.name !== null) ? p.name : p.platformName) + " (" + p.connectionType + ")";
+                       btn.setAttribute("onclick", "testPrint('" + p.address + "')");
+                       printers.appendChild(btn);
+                   }
+               });
+           }
+           console.log("Device Interface Loaded");
+       });
+
+       function testCamera() {
+           if (!window.WebCamera || !WebCamera.takePicture) {
+               alert("WebCamera API not available");
+               return;
+           }
+           WebCamera.takePicture().then(function (res) {
+               alert(JSON.stringify(res));
+           }).catch(function (e) {
+               alert(e);
+           });
+       }
+
+       function testPhoto() {
+           if (!window.WebCamera || !WebCamera.takePicture) {
+               alert("WebCamera API not available");
+               return;
+           }
+           WebCamera.pickPhoto().then(function (res) {
+               alert(JSON.stringify(res));
+           }).catch(function (e) {
+               alert(e);
+           });
+       }
+       function getPrinters() {
+           if (!window.WebThermalPrinter || !WebThermalPrinter.getPrinters) {
+               alert("WebThermalPrinter API not available");
+               return;
+           }
+           WebThermalPrinter.getPrinters().then(function (res) {
+               var printers = document.getElementById("printers");
+               printers.innerHTML = '';
+               for (var i = 0; i < res.length; i++) {
+                   var p = res[i];
+                   var btn = document.createElement('button');
+                   btn.setAttribute("onclick", "testPrint('" + p.address + "')");
+                   btn.innerText = "🖨️ " + ((p.name !== undefined && p.name !== null) ? p.name : p.platformName) + " (" + p.connectionType + ")";
+                   printers.appendChild(btn);
+               }
+               alert(JSON.stringify(res));
+           }).catch(function (e) {
+               alert(e);
+           });
+       }
+
+       function testPrint(address) {
+           if (!window.WebThermalPrinter || !WebThermalPrinter.test) {
+               alert("WebThermalPrinter API not available");
+               return;
+           }
+
+           WebThermalPrinter.test(address).then(function (res) {
+               console.log(JSON.stringify(res));
+           }).catch(function (e) {
+               console.error(e);
+           });
+       }
+
+       function pickFileAndRead() {
+           if (!window.WebFS || !WebFS.pick) {
+               alert("WebFile API not available");
+               return;
+           }
+           WebFS.pick({ title: "Chosir un fichier txt" }).then(function (res) {
+               WebFS.read(res.path).then(function (cont) {
+                   alert(cont)
+                   console.log(cont)
+               }).catch(function (e) {
+                   console.error(e);
+                   alert(e);
+               });
+           }).catch(function (e) {
+               alert(e);
+           });
+       }
+   </script>
+</body>
+
+</html>
