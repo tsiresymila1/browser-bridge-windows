@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'package:browser_bridge/generated/assets.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -30,6 +31,35 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   double _progress = 0;
   InAppWebViewController? webViewController;
+
+  final ContextMenu contextMenu = ContextMenu(
+    menuItems: [
+      ContextMenuItem(
+        id: 1,
+        title: "🔍 Search Google",
+      ),
+      ContextMenuItem(
+        id: 2,
+        title: "📋 Copy Link",
+      ),
+    ],
+    onCreateContextMenu: (hitTestResult) async {
+      debugPrint("Context menu created: ${hitTestResult.extra}");
+    },
+    onContextMenuActionItemClicked: (menuItem) async {
+      debugPrint("Menu item clicked: ${menuItem.id} - ${menuItem.title}");
+      // Example actions
+      if (menuItem.id == 1) {
+        // Search Google
+        // You can inject JS or use controller
+      } else if (menuItem.id == 2) {
+        // Copy link to clipboard
+      }
+    },
+    onHideContextMenu: () {
+      debugPrint("Context menu hidden");
+    },
+  );
 
   @override
   void initState() {
@@ -70,6 +100,7 @@ class _HomePageState extends State<HomePage> {
         allowContentAccess: true,
         verticalScrollbarThumbColor: Colors.transparent,
         isInspectable: true,
+        disableContextMenu: true,
         useHybridComposition: false);
   }
 
@@ -142,83 +173,155 @@ class _HomePageState extends State<HomePage> {
                   builder: (context2, state) {
                     final startUrl = state.config["web_url"] ??
                         "file:///${getWebPath()}/index.html";
-                    return InAppWebView(
-                      key: webViewKey,
-                      onProgressChanged: (_, progress) =>
-                          setState(() => _progress = progress / 100),
-                      initialSettings: _getWebViewSettings(
-                        state.config["web_path"] ?? getWebPath(),
-                      ),
-                      initialUrlRequest: URLRequest(url: WebUri(startUrl)),
-                      onWebViewCreated: (controller) async {
-                        webViewController = controller;
-                        await _registerServices(context);
-                      },
-                      onLoadStart: (_, __) => setState(() => _isLoading = true),
-                      onLoadStop: (ctr, url) async {
-                        setState(() => _isLoading = false);
-                      },
-                      onReceivedError: (ctr, req, error) async {
-                        if (req.isForMainFrame ?? false) {
-                          final errorHtml = await rootBundle.loadString(
-                            Assets.appError,
-                          );
-                          await ctr.loadData(
-                            data: errorHtml,
-                            mimeType: 'text/html',
-                            encoding: 'utf-8',
-                            baseUrl: req.url, // fake domain for local assets
-                          );
+                    return Listener(
+                      onPointerDown: (event) async {
+                        if (event.kind == PointerDeviceKind.mouse &&
+                            event.buttons == kSecondaryMouseButton) {
+                          final overlay = Overlay.of(context)
+                              .context
+                              .findRenderObject() as RenderBox;
+                          final position = event.position;
+                          await showMenu(
+                            context: context,
+                            elevation: 8,
+                            position: RelativeRect.fromLTRB(
+                              position.dx,
+                              position.dy,
+                              overlay.size.width - position.dx,
+                              overlay.size.height - position.dy,
+                            ),
+                            items: [
+                              PopupMenuItem(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  value: 'refresh',
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(minWidth: 200),
+                                    child: const Row(
+                                      spacing: 8,
+                                      children: [
+                                        Icon(
+                                          Icons.refresh,
+                                          size: 24,
+                                        ),
+                                        Text("Refresh")
+                                      ],
+                                    ),
+                                  )),
+                              PopupMenuItem(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  value: 'setting',
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(minWidth: 200),
+                                    child: const Row(
+                                      spacing: 8,
+                                      children: [
+                                        Icon(
+                                          Icons.settings,
+                                          size: 24,
+                                        ),
+                                        Text("Settings")
+                                      ],
+                                    ),
+                                  )),
+                            ],
+                          ).then((value) {
+                            if (value == 'setting') {
+                              context.pushNamed("setting");
+                            } else if (value == 'refresh') {
+                              webViewController?.reload().then((res) => {});
+                            }
+                          });
                         }
-                        setState(() => _isLoading = false);
                       },
-                      onJsAlert: (_, js) async {
-                        await showOkAlertDialog(
-                          context: context,
-                          message: js.message,
-                          style: AdaptiveStyle.adaptive
-                        );
-                        return JsAlertResponse(handledByClient: true);
-                      },
-                      onJsConfirm: (_, js) async {
-                        final result = await showOkCancelAlertDialog(
-                          context: context,
-                          message: js.message,
-                          title: "Confirmation",
-                        );
-                        return JsConfirmResponse(
-                          handledByClient: true,
-                          action: result.index == 0
-                              ? JsConfirmResponseAction.CONFIRM
-                              : JsConfirmResponseAction.CANCEL,
-                        );
-                      },
-                      onConsoleMessage: (_, message) {
-                        final logFn = switch (message.messageLevel) {
-                          ConsoleMessageLevel.ERROR => logger.e,
-                          ConsoleMessageLevel.WARNING => logger.w,
-                          ConsoleMessageLevel.DEBUG => logger.d,
-                          _ => logger.i,
-                        };
-                        logFn(message.message);
-                      },
-                      shouldInterceptRequest: (controller, request) async {
-                        return null;
-                      },
-                      shouldOverrideUrlLoading:
-                          (controller, navigationAction) async {
-                        final uri = navigationAction.request.url;
-                        if (uri == null) return NavigationActionPolicy.ALLOW;
-                        if (!['http', 'https', 'file'].contains(uri.scheme)) {
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri,
-                                mode: LaunchMode.externalApplication);
+                      child: InAppWebView(
+                        key: webViewKey,
+                        contextMenu: contextMenu,
+                        onProgressChanged: (_, progress) =>
+                            setState(() => _progress = progress / 100),
+                        initialSettings: _getWebViewSettings(
+                          state.config["web_path"] ?? getWebPath(),
+                        ),
+                        initialUrlRequest: URLRequest(url: WebUri(startUrl)),
+                        onWebViewCreated: (controller) async {
+                          webViewController = controller;
+                          await _registerServices(context);
+                          await controller
+                              .requestFocusNodeHref(); // trick: forces input focus
+                        },
+                        onLoadStart: (_, __) =>
+                            setState(() => _isLoading = true),
+                        onLoadStop: (ctr, url) async {
+                          setState(() => _isLoading = false);
+                          await webViewController
+                              ?.evaluateJavascript(source: """
+                            document.body.focus();
+                          """);
+                        },
+                        onReceivedError: (ctr, req, error) async {
+                          if (req.isForMainFrame ?? false) {
+                            final errorHtml = await rootBundle.loadString(
+                              Assets.appError,
+                            );
+                            await ctr.loadData(
+                              data: errorHtml,
+                              mimeType: 'text/html',
+                              encoding: 'utf-8',
+                              baseUrl: req.url, // fake domain for local assets
+                            );
                           }
-                          return NavigationActionPolicy.CANCEL;
-                        }
+                          setState(() => _isLoading = false);
+                        },
+                        onJsAlert: (_, js) async {
+                          await showOkAlertDialog(
+                              context: context,
+                              message: js.message,
+                              style: AdaptiveStyle.adaptive);
+                          return JsAlertResponse(handledByClient: true);
+                        },
+                        onJsConfirm: (_, js) async {
+                          final result = await showOkCancelAlertDialog(
+                            context: context,
+                            message: js.message,
+                            title: "Confirmation",
+                          );
+                          return JsConfirmResponse(
+                            handledByClient: true,
+                            action: result.index == 0
+                                ? JsConfirmResponseAction.CONFIRM
+                                : JsConfirmResponseAction.CANCEL,
+                          );
+                        },
+                        onConsoleMessage: (_, message) {
+                          final logFn = switch (message.messageLevel) {
+                            ConsoleMessageLevel.ERROR => logger.e,
+                            ConsoleMessageLevel.WARNING => logger.w,
+                            ConsoleMessageLevel.DEBUG => logger.d,
+                            _ => logger.i,
+                          };
+                          logFn(message.message);
+                        },
+                        shouldInterceptRequest: (controller, request) async {
+                          return null;
+                        },
+                        shouldOverrideUrlLoading:
+                            (controller, navigationAction) async {
+                          final uri = navigationAction.request.url;
+                          if (uri == null) return NavigationActionPolicy.ALLOW;
+                          if (!['http', 'https', 'file'].contains(uri.scheme)) {
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
+                            }
+                            return NavigationActionPolicy.CANCEL;
+                          }
 
-                        return NavigationActionPolicy.ALLOW;
-                      },
+                          return NavigationActionPolicy.ALLOW;
+                        },
+                      ),
                     );
                   },
                   listener: (context, state) async {
@@ -249,12 +352,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          floatingActionButton: IconButton(
-            onPressed: () => context.pushNamed("setting"),
-            icon: const Icon(Icons.more_vert),
-          ),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.miniEndDocked,
         ),
       ),
     );

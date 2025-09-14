@@ -180,7 +180,7 @@ var WebThermalPrinter = {
                               },
 
                               { "type": "feed", "lines": 1 },
-
+                              { "type": "divider", "text": 'x' },
                               { "type": "text", "data": "Subtotal: 4.50", "align": "right", "bold": true },
                               { "type": "text", "data": "TVA 10%: 0.45", "align": "right" },
                               { "type": "text", "data": "Total: 4.95", "align": "right", "bold": true },
@@ -194,9 +194,9 @@ var WebThermalPrinter = {
                               { "type": "text", "data": "Client: John Doe", "align": "center" },
                               { "type": "text", "data": "Tel: 0987654321", "align": "center" },
 
-                              { "type": "cut" }
+                              { "type": "cut", "mode": "partial" }
                             ]
-                          }
+                }
                 `
             }
         });

@@ -4,7 +4,6 @@ import 'package:browser_bridge/core/util/log.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 
-
 class WindowsCameraDelegate extends ImagePickerCameraDelegate {
   List<CameraDescription> _cameras = [];
   int _cameraId = -1;
@@ -15,7 +14,7 @@ class WindowsCameraDelegate extends ImagePickerCameraDelegate {
   @override
   Future<XFile?> takePhoto(
       {ImagePickerCameraDelegateOptions options =
-      const ImagePickerCameraDelegateOptions()}) async {
+          const ImagePickerCameraDelegateOptions()}) async {
     if (_isTakingPhoto) {
       logger.e('Camera is currently busy.');
       return null;
@@ -78,9 +77,9 @@ class WindowsCameraDelegate extends ImagePickerCameraDelegate {
 
     _errorStreamSubscription =
         CameraPlatform.instance.onCameraError(_cameraId).listen((errorEvent) {
-          logger.e('Camera error detected: ${errorEvent.description}');
-          unawaited(_resetCamera());
-        });
+      logger.e('Camera error detected: ${errorEvent.description}');
+      unawaited(_resetCamera());
+    });
   }
 
   Future<void> _resetCamera() async {
@@ -102,7 +101,7 @@ class WindowsCameraDelegate extends ImagePickerCameraDelegate {
   @override
   Future<XFile?> takeVideo(
       {ImagePickerCameraDelegateOptions options =
-      const ImagePickerCameraDelegateOptions()}) {
+          const ImagePickerCameraDelegateOptions()}) {
     throw UnimplementedError('Video capture is not yet supported on Windows.');
   }
 

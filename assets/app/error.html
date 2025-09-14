@@ -5,88 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scallable=0"/>
     <title>Error</title>
     <style>
-        * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-          font-size: 14px;
-        }
+      html, body {
+        height: 100%;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Open Sans', 'Helvetica Neue', sans-serif;
+        background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+        width: 100vw;
+        box-sizing: border-box;
+      }
 
-        html, body {
-          height: 100%;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-            Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-          background: #f8f9fa;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 2rem;
-        }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        width: 100vw;
+        margin: 0;
+      }
 
-        .error-container {
-          background: white;
-          max-width: 400px;
-          width: 100%;
-          padding: 2rem;
-          border-radius: 8px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-          text-align: center;
-        }
+      .error-container {
+        width: 100vw;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+        text-align: center;
+        animation: fadeIn 1s cubic-bezier(.39,.575,.56,1.000);
+      }
 
-        .error-icon {
-          font-size: 3rem;
-          color: #dc3545;
-          margin-bottom: 1rem;
-        }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.96); }
+        to { opacity: 1; transform: scale(1); }
+      }
 
+      .error-icon {
+        margin-bottom: 1.2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .error-icon svg {
+        width: 80px;
+        height: 80px;
+        display: block;
+      }
+
+      .error-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #185a9d;
+        margin-bottom: 0.7rem;
+        letter-spacing: 0.01em;
+        text-shadow: 0 2px 8px rgba(24,90,157,0.10);
+      }
+
+      .error-message {
+        font-size: 1.3rem;
+        color: #fff;
+        margin-bottom: 2.2rem;
+        line-height: 1.7;
+        text-shadow: 0 2px 8px rgba(24,90,157,0.18);
+      }
+
+      .error-actions a {
+        font-size: 1.1rem;
+        display: inline-block;
+        padding: 0.8rem 2.5rem;
+        background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
+        color: white;
+        border-radius: 28px;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 2px 8px 0 rgba(24,90,157,0.10);
+        transition: background 0.2s, transform 0.2s;
+        border: none;
+        outline: none;
+      }
+
+      .error-actions a:hover {
+        background: linear-gradient(90deg, #185a9d 0%, #43cea2 100%);
+        transform: translateY(-2px) scale(1.04);
+      }
+
+      @media (max-width: 600px) {
         .error-title {
           font-size: 1.5rem;
-          font-weight: 600;
-          margin-bottom: 0.5rem;
         }
-
         .error-message {
-          font-size: 0.8rem;
-          color: #6c757d;
-          margin-bottom: 1.5rem;
+          font-size: 1.05rem;
         }
-
-        .error-actions a {
-          font-size: 0.8rem;
-          display: inline-block;
-          padding: 0.6rem 1.2rem;
-          background: #0784A9;
-          color: white;
-          border-radius: 4px;
-          text-decoration: none;
-          transition: background 0.2s ease-in-out;
+        .error-icon svg {
+          width: 48px;
+          height: 48px;
         }
-
-        .error-actions a:hover {
-          background: #045973;
-        }
-
-        @media (max-width: 480px) {
-          .error-container {
-            padding: 1.5rem;
-          }
-
-          .error-title {
-            font-size: 1.3rem;
-          }
-          .error-message {
-            font-size: 0.95rem;
-          }
-        }
+      }
     </style>
 </head>
 <body>
 <div class="error-container">
-    <div class="error-icon">⚠️</div>
-    <div class="error-title">Something went wrong</div>
-    <div class="error-message">We couldn’t complete your request. Please try again later.</div>
+    <div class="error-icon">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="32" fill="#dc3545" fill-opacity="0.12"/>
+            <path d="M32 18v18" stroke="#dc3545" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="32" cy="44" r="2.5" fill="#dc3545"/>
+        </svg>
+    </div>
+    <div class="error-title">Oops! Something went wrong</div>
+    <div class="error-message">We couldn’t complete your request.<br>Please try again later or contact support if the problem persists.</div>
     <div class="error-actions">
-        <a href="#" onclick="window.location.reload();">Refresh</a>
+        <a href="#" onclick="window.location.reload();">Refresh Page</a>
     </div>
 </div>
 </body>

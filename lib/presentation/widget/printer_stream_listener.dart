@@ -36,7 +36,6 @@ class _PrinterStreamListenerState extends State<PrinterStreamListener> {
     );
     _devicesStreamSubscription = _flutterThermalPrinterPlugin.devicesStream
         .listen((List<Printer> event) {
-      logger.d(event);
       event.removeWhere(
         (element) => element.name == null || element.name == '',
       );
@@ -51,7 +50,6 @@ class _PrinterStreamListenerState extends State<PrinterStreamListener> {
       startScan();
     });
   }
-
 
   @override
   void dispose() {

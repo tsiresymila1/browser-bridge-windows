@@ -35,7 +35,7 @@ class PrinterService extends JsService {
         if (printer != null) {
           if (!(printer.isConnected ?? true)) {
             logger.i("Connecting ....");
-             await FlutterThermalPrinter.instance.connect(
+            await FlutterThermalPrinter.instance.connect(
               printer,
             );
             logger.i("Printing ....");
@@ -43,8 +43,9 @@ class PrinterService extends JsService {
           final profile = await CapabilityProfile.load();
           final generator = Generator(PaperSize.mm80, profile);
           List<int> bytes = generator.reset();
-          bytes+= await PrinterCommandParser(generator).parse(contents);
-          await FlutterThermalPrinter.instance.printData(printer, bytes, longData: true);
+          bytes += await PrinterCommandParser(generator).parse(contents);
+          await FlutterThermalPrinter.instance
+              .printData(printer, bytes, longData: true);
         }
 
       case "print":
@@ -64,8 +65,9 @@ class PrinterService extends JsService {
           final profile = await CapabilityProfile.load();
           final generator = Generator(PaperSize.mm80, profile);
           List<int> bytes = generator.reset();
-          bytes+= await PrinterCommandParser(generator).parse(contents);
-          await FlutterThermalPrinter.instance.printData(printer, bytes, longData: true);
+          bytes += await PrinterCommandParser(generator).parse(contents);
+          await FlutterThermalPrinter.instance
+              .printData(printer, bytes, longData: true);
         }
         break;
       case "printNetwork":
@@ -82,7 +84,7 @@ class PrinterService extends JsService {
         final profile = await CapabilityProfile.load();
         final generator = Generator(PaperSize.mm80, profile);
         List<int> bytes = generator.reset();
-        bytes+= await PrinterCommandParser(generator).parse(contents);
+        bytes += await PrinterCommandParser(generator).parse(contents);
         await service.printTicket(bytes);
         await service.disconnect();
         break;

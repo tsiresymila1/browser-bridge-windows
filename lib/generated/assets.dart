@@ -5,5 +5,4 @@ class Assets {
   static const String appError = 'assets/app/error.html';
   static const String appIndex = 'assets/app/index.html';
   static const String jsJsBridge = 'assets/js/js_bridge.js';
-
 }

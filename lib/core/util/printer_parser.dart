@@ -2,10 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:browser_bridge/core/util/log.dart';
 import 'package:flutter_thermal_printer/flutter_thermal_printer.dart';
-import 'package:image/image.dart' as img;
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
 
 class PrinterCommandParser {
   final Generator generator;
@@ -41,8 +40,11 @@ class PrinterCommandParser {
         case 'feed':
           bytes.addAll(generator.feed(cmd['lines'] ?? 1));
           break;
+        case 'divider':
+          bytes.addAll(_handleDivider(cmd));
+          break;
         case 'cut':
-          bytes.addAll(generator.cut());
+          bytes.addAll(_handleCut(cmd));
           break;
         case 'raw':
           bytes.addAll(_handleRaw(cmd));
@@ -56,6 +58,16 @@ class PrinterCommandParser {
     return bytes;
   }
 
+  List<int> _handleCut(Map<String, dynamic> cmd) {
+    final mode = cmd['mode'] ?? 'full';
+    final cutMode = _mapCutMode(mode);
+    return generator.cut(mode: cutMode);
+  }
+
+  List<int> _handleDivider(Map<String, dynamic> cmd) {
+    final text = cmd['text'] ?? '-';
+    return generator.hr(ch: text);
+  }
   // --- Handlers ---
 
   List<int> _handleText(Map<String, dynamic> cmd) {
@@ -116,7 +128,8 @@ class PrinterCommandParser {
               align: align,
               bold: bold,
               underline: underline,
-              fontType: c['font'] == 'B' ? PosFontType.fontB : PosFontType.fontA,
+              fontType:
+                  c['font'] == 'B' ? PosFontType.fontB : PosFontType.fontA,
             ),
           ));
           break;
@@ -134,7 +147,9 @@ class PrinterCommandParser {
             text: '',
             width: width,
             styles: PosStyles(align: align),
-            textEncoded: image != null ? Uint8List.fromList(generator.image(image)) : null,
+            textEncoded: image != null
+                ? Uint8List.fromList(generator.image(image))
+                : null,
           ));
           break;
         case 'barcode':
@@ -159,7 +174,7 @@ class PrinterCommandParser {
             text: '',
             width: width,
             styles: PosStyles(align: align),
-            textEncoded: Uint8List.fromList( _handleRaw(c)),
+            textEncoded: Uint8List.fromList(_handleRaw(c)),
           ));
           break;
       }
@@ -192,10 +207,10 @@ class PrinterCommandParser {
   }
 
   Future<img.Image?> loadAndCompressImageFromPath(
-      String path, {
-        int maxWidth = 384,
-        int? maxHeight,
-      }) async {
+    String path, {
+    int maxWidth = 384,
+    int? maxHeight,
+  }) async {
     final file = File(path);
     if (!file.existsSync()) return null;
 
@@ -204,10 +219,10 @@ class PrinterCommandParser {
   }
 
   Future<img.Image?> loadAndCompressImageFromUrl(
-      String url, {
-        int maxWidth = 384,
-        int? maxHeight,
-      }) async {
+    String url, {
+    int maxWidth = 384,
+    int? maxHeight,
+  }) async {
     final response = await http.get(Uri.parse(url));
     if (response.statusCode != 200) return null;
 
@@ -216,10 +231,10 @@ class PrinterCommandParser {
   }
 
   Future<img.Image?> _processImage(
-      Uint8List bytes, {
-        int maxWidth = 384,
-        int? maxHeight,
-      }) async {
+    Uint8List bytes, {
+    int maxWidth = 384,
+    int? maxHeight,
+  }) async {
     final image = img.decodeImage(bytes);
     if (image == null) return null;
 
@@ -250,9 +265,11 @@ class PrinterCommandParser {
 
     img.Image? image;
     if (path != null && File(path).existsSync()) {
-      image = await loadAndCompressImageFromPath(path, maxWidth: width, maxHeight: height);
+      image = await loadAndCompressImageFromPath(path,
+          maxWidth: width, maxHeight: height);
     } else if (url != null) {
-      image = await loadAndCompressImageFromUrl(url, maxWidth: width, maxHeight: height);
+      image = await loadAndCompressImageFromUrl(url,
+          maxWidth: width, maxHeight: height);
     }
 
     if (image != null) {
@@ -321,12 +338,21 @@ class PrinterCommandParser {
     }
   }
 
+  PosCutMode _mapCutMode(String mode) {
+    switch (mode) {
+      case 'partial':
+        return PosCutMode.partial;
+      default:
+        return PosCutMode.full;
+    }
+  }
+
   QRSize _mapQrcodeSize(int pos) {
     switch (pos) {
       case 1:
         return QRSize.size1;
-    case 2:
-      return QRSize.size2;
+      case 2:
+        return QRSize.size2;
       case 3:
         return QRSize.size3;
       case 4:

@@ -10,5 +10,6 @@ createWebFile() async {
   if (!dir.existsSync()) {
     await dir.create(recursive: true);
   }
-  (await File("${dir.path}/index.html").create()).writeAsString(await rootBundle.loadString(Assets.appIndex));
+  (await File("${dir.path}/index.html").create())
+      .writeAsString(await rootBundle.loadString(Assets.appIndex));
 }

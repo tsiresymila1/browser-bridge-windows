@@ -69,9 +69,9 @@ class SettingPage extends StatelessWidget {
                                       onPressed: () {
                                         context.read<SettingBloc>().add(
                                               UpdateSettingEvent(
-                                                config:  {
+                                                config: {
                                                   "web_url":
-                                                  "file:///${getWebPath()}/index.html",
+                                                      "file:///${getWebPath()}/index.html",
                                                 },
                                               ),
                                             );

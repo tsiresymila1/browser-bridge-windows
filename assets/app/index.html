@@ -105,7 +105,7 @@
                        var p = list[i];
                        var btn = document.createElement('button');
                        btn.innerText = "🖨️ " + ((p.name !== undefined && p.name !== null) ? p.name : p.platformName) + " (" + p.connectionType + ")";
-                       btn.setAttribute("onclick", "testPrint('" + p.address + "')");
+                       btn.setAttribute("onclick", "customPrint('" + p.address + "')");
                        printers.appendChild(btn);
                    }
                });
@@ -164,6 +164,74 @@
            }
 
            WebThermalPrinter.test(address).then(function (res) {
+               console.log(JSON.stringify(res));
+           }).catch(function (e) {
+               console.error(e);
+           });
+       }
+
+       function customPrint(address){
+            if (!window.WebThermalPrinter || !WebThermalPrinter.test) {
+               alert("WebThermalPrinter API not available");
+               return;
+            }
+            var data = {
+                  "commands": [
+                              { "type": "image", "path": "C:/Users/tsire/OneDrive/Desktop/pos.jpg","width": 100, "height": 100  },
+                              { "type": "text", "data": "STORE CENTER", "align": "center", "bold": true, "underline": true },
+                              { "type": "text", "data": "123 Main Street", "align": "center" },
+                              { "type": "text", "data": "City, Country", "align": "center" },
+                              { "type": "text", "data": "Tel: 0123456789", "align": "center" },
+                              { "type": "feed", "lines": 1 },
+
+                              { "type": "qrcode", "data": "https://store-center.example.com", "size": 6 },
+                              { "type": "feed", "lines": 1 },
+
+                              { "type": "text", "data": "Items", "align": "left", "bold": true, "underline": true },
+
+                              {
+                                "type": "row",
+                                "columns": [
+                                  { "text": "Item", "width": 6, "align": "left", "bold": true },
+                                  { "text": "Qty", "width": 2, "align": "center", "bold": true },
+                                  { "text": "Price", "width": 4, "align": "right", "bold": true }
+                                ]
+                              },
+                              {
+                                "type": "row",
+                                "columns": [
+                                  { "text": "Apple", "width": 6, "align": "left" },
+                                  { "text": "2", "width": 2, "align": "center" },
+                                  { "text": "3.00", "width": 4, "align": "right" }
+                                ]
+                              },
+                              {
+                                "type": "row",
+                                "columns": [
+                                  { "text": "Banana", "width": 6, "align": "left" },
+                                  { "text": "1", "width": 2, "align": "center" },
+                                  { "text": "1.50", "width": 4, "align": "right" }
+                                ]
+                              },
+                              { "type": "feed", "lines": 1 },
+                              { "type": "divider", "text": 'x' },
+                              { "type": "text", "data": "Subtotal: 4.50", "align": "right", "bold": true },
+                              { "type": "text", "data": "TVA 10%: 0.45", "align": "right" },
+                              { "type": "text", "data": "Total: 4.95", "align": "right", "bold": true },
+
+                              { "type": "feed", "lines": 1 },
+
+                              { "type": "barcode", "data": "123456789012", "format": "ean13", "height": 162, "width": 2, "textPos": "below" },
+
+                              { "type": "feed", "lines": 1 },
+
+                              { "type": "text", "data": "Client: John Doe", "align": "center" },
+                              { "type": "text", "data": "Tel: 0987654321", "align": "center" },
+
+                              { "type": "cut", "mode": "partial" }
+                            ]
+                }
+            WebThermalPrinter.print(address, JSON.stringify(data)).then(function (res) {
                console.log(JSON.stringify(res));
            }).catch(function (e) {
                console.error(e);

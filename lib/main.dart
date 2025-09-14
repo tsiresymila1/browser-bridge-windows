@@ -15,11 +15,10 @@ import 'presentation/blocs/printer/printer_bloc.dart';
 import 'presentation/blocs/setting/setting_bloc.dart';
 import 'presentation/router.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
-   WindowsCameraDelegate.register();
+  WindowsCameraDelegate.register();
 
   WindowOptions windowOptions = const WindowOptions(
       // fullScreen: true,

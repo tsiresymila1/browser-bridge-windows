@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:mime/mime.dart';
 
-
 class CustomWebPathHandler extends CustomPathHandler {
   final String dir;
 
