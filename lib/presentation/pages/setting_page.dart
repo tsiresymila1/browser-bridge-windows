@@ -28,7 +28,7 @@ class SettingPage extends StatelessWidget {
             key: formKey,
             initialValue: {
               "web_url": state.config['web_url'] ??
-                  "file:///${getWebPath()}/index.html",
+                  getWebUrl(),
               "web_path": (state.config['web_path'] ?? getWebPath())
                   .toString()
                   .replaceFirst(getRootWebPath(), ""),
@@ -59,7 +59,7 @@ class SettingPage extends StatelessWidget {
                                   name: "web_url",
                                   decoration: InputDecoration(
                                     hintText:
-                                        "file:///${getWebPath()}/index.html",
+                                    getWebUrl(),
                                     contentPadding: const EdgeInsets.symmetric(
                                       vertical: 2,
                                       horizontal: 8,
@@ -71,7 +71,7 @@ class SettingPage extends StatelessWidget {
                                               UpdateSettingEvent(
                                                 config: {
                                                   "web_url":
-                                                      "file:///${getWebPath()}/index.html",
+                                                  getWebUrl(),
                                                 },
                                               ),
                                             );

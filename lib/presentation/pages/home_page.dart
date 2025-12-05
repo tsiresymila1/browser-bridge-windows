@@ -71,6 +71,10 @@ class _HomePageState extends State<HomePage> {
     webViewKey.currentState?.dispose();
     super.dispose();
   }
+  clearCache() async {
+    final cookieManager = CookieManager.instance();
+    await  cookieManager.deleteAllCookies();
+  }
 
   InAppWebViewSettings _getWebViewSettings(String webPath) {
     return InAppWebViewSettings(
@@ -123,6 +127,19 @@ class _HomePageState extends State<HomePage> {
       handlerName: 'handlerFoo',
       callback: (_) => {'bar': 'bar_value', 'baz': 'baz_value'},
     );
+    webViewController?.addJavaScriptHandler(
+      handlerName: 'clearAllCache',
+      callback: (_) async {
+        return await clearCache();
+      },
+    );
+
+    webViewController?.addJavaScriptHandler(
+      handlerName: 'clearClientCertPreferences',
+      callback: (_) async => {
+        await InAppWebViewController.clearClientCertPreferences()
+      },
+    );
     await webViewController?.injectJavascriptFileFromAsset(
         assetFilePath: Assets.jsJsBridge);
     await webViewController?.addUserScript(
@@ -172,7 +189,7 @@ class _HomePageState extends State<HomePage> {
                       p.config['offline'] != r.config['offline'],
                   builder: (context2, state) {
                     final startUrl = state.config["web_url"] ??
-                        "file:///${getWebPath()}/index.html";
+                        getWebUrl();
                     return Listener(
                       onPointerDown: (event) async {
                         if (event.kind == PointerDeviceKind.mouse &&
@@ -212,6 +229,24 @@ class _HomePageState extends State<HomePage> {
                               PopupMenuItem(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12),
+                                  value: 'clearCache',
+                                  child: ConstrainedBox(
+                                    constraints:
+                                    const BoxConstraints(minWidth: 200),
+                                    child: const Row(
+                                      spacing: 8,
+                                      children: [
+                                        Icon(
+                                          Icons.delete_forever,
+                                          size: 24,
+                                        ),
+                                        Text("Clear cache")
+                                      ],
+                                    ),
+                                  )),
+                              PopupMenuItem(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
                                   value: 'setting',
                                   child: ConstrainedBox(
                                     constraints:
@@ -233,10 +268,15 @@ class _HomePageState extends State<HomePage> {
                               context.pushNamed("setting");
                             } else if (value == 'refresh') {
                               webViewController?.reload().then((res) => {});
+                            }else if(value == 'clearCache'){
+                              clearCache().then((res) => {
+                                webViewController?.reload().then((res) => {})
+                              });
                             }
                           });
                         }
                       },
+                      
                       child: InAppWebView(
                         key: webViewKey,
                         contextMenu: contextMenu,
@@ -250,7 +290,7 @@ class _HomePageState extends State<HomePage> {
                           webViewController = controller;
                           await _registerServices(context);
                           await controller
-                              .requestFocusNodeHref(); // trick: forces input focus
+                              .requestFocusNodeHref();
                         },
                         onLoadStart: (_, __) =>
                             setState(() => _isLoading = true),
@@ -326,7 +366,7 @@ class _HomePageState extends State<HomePage> {
                   },
                   listener: (context, state) async {
                     final newUrl = state.config["web_url"] ??
-                        "file:///${getWebPath()}/index.html";
+                        getWebUrl();
                     webViewController?.setSettings(
                       settings: _getWebViewSettings(
                         state.config["web_path"] ?? getWebPath(),

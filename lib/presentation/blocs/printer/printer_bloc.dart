@@ -7,7 +7,7 @@ part 'printer_event.dart';
 part 'printer_state.dart';
 
 class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
-  PrinterBloc() : super(PrinterInitial(printers: [])) {
+  PrinterBloc() : super(const PrinterInitial(printers: [])) {
     on<UpdatePrinterEvent>((event, emit) {
       emit(PrinterInitial(printers: event.printers));
     });

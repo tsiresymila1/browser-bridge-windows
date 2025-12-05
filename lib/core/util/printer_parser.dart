@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:browser_bridge/core/util/log.dart';
 import 'package:flutter_thermal_printer/flutter_thermal_printer.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
@@ -68,21 +69,21 @@ class PrinterCommandParser {
     final text = cmd['text'] ?? '-';
     return generator.hr(ch: text);
   }
+
   // --- Handlers ---
 
-  List<int> _handleText(Map<String, dynamic> cmd) {
-    final text = cmd['data'] ?? '';
+  PosStyles _getTextStyle(Map<String, dynamic> cmd) {
+
     final align = _mapAlign(cmd['align']);
     final bold = cmd['bold'] ?? false;
     final reverse = cmd['reverse'] ?? false;
     final underline = cmd['underline'] ?? false;
     final italic = cmd['italic'] ?? false;
     final font = cmd['font'] ?? 'A';
-    final size = cmd['size'] ?? 1;
+    final size = double.parse("${cmd['size'] ?? 1}");
     final codeTable = cmd['codeTable'];
-    final encoding = cmd['encoding'] ?? 'ascii';
 
-    final styles = PosStyles(
+    return PosStyles(
       align: align,
       bold: bold,
       reverse: reverse,
@@ -92,6 +93,12 @@ class PrinterCommandParser {
       width: PosTextSize.custom(size),
       codeTable: codeTable,
     );
+  }
+
+  List<int> _handleText(Map<String, dynamic> cmd) {
+    final text = cmd['data'] ?? '';
+    final encoding = cmd['encoding'] ?? 'ascii';
+    final styles = _getTextStyle(cmd);
 
     List<int> encoded;
     switch (encoding) {
@@ -109,28 +116,19 @@ class PrinterCommandParser {
   }
 
   Future<List<int>> _handleRow(Map<String, dynamic> cmd) async {
-    final cols = cmd['columns'] as List;
+    final cols = cmd['columns'] as List<dynamic>;
     List<PosColumn> posCols = [];
 
     for (var c in cols) {
       final type = c['type'] ?? 'text';
       final width = c['width'] ?? 4;
-      final align = _mapAlign(c['align']);
-      final bold = c['bold'] ?? false;
-      final underline = c['underline'] ?? false;
-
       switch (type) {
         case 'text':
+          logger.w(c);
           posCols.add(PosColumn(
             text: c['text'] ?? '',
             width: width,
-            styles: PosStyles(
-              align: align,
-              bold: bold,
-              underline: underline,
-              fontType:
-                  c['font'] == 'B' ? PosFontType.fontB : PosFontType.fontA,
-            ),
+            styles: _getTextStyle(c) ,
           ));
           break;
 
@@ -146,7 +144,7 @@ class PrinterCommandParser {
           posCols.add(PosColumn(
             text: '',
             width: width,
-            styles: PosStyles(align: align),
+            styles:  _getTextStyle(c),
             textEncoded: image != null
                 ? Uint8List.fromList(generator.image(image))
                 : null,
@@ -156,7 +154,7 @@ class PrinterCommandParser {
           posCols.add(PosColumn(
             text: '',
             width: width,
-            styles: PosStyles(align: align),
+            styles:  _getTextStyle(c),
             textEncoded: Uint8List.fromList(_handleBarcode(c)),
           ));
           break;
@@ -165,7 +163,7 @@ class PrinterCommandParser {
           posCols.add(PosColumn(
             text: '',
             width: width,
-            styles: PosStyles(align: align),
+            styles:  _getTextStyle(c),
             textEncoded: Uint8List.fromList(_handleQrcode(c)),
           ));
           break;
@@ -173,7 +171,7 @@ class PrinterCommandParser {
           posCols.add(PosColumn(
             text: '',
             width: width,
-            styles: PosStyles(align: align),
+            styles:  _getTextStyle(c),
             textEncoded: Uint8List.fromList(_handleRaw(c)),
           ));
           break;
@@ -191,9 +189,9 @@ class PrinterCommandParser {
 
   List<int> _handleBarcode(Map<String, dynamic> cmd) {
     final data = cmd['data'] ?? '';
-    final format = cmd['format'] ?? 'ean13';
+    final format = cmd['format'] ?? 'code128';
     final height = cmd['height'] ?? 162;
-    final width = cmd['width'] ?? 2;
+    final width = cmd['width'] ?? 10;
     final textPos = cmd['textPos'] ?? 'below';
 
     final Barcode barcode = _mapBarcode(format, data.toString().split(''));
@@ -260,6 +258,7 @@ class PrinterCommandParser {
   Future<List<int>> _handleImage(Map<String, dynamic> cmd) async {
     final path = cmd['path'];
     final url = cmd['url'];
+    final String? base64Str = cmd['base64'];
     final width = cmd['width'] ?? 384;
     final height = cmd['height'];
 
@@ -270,8 +269,18 @@ class PrinterCommandParser {
     } else if (url != null) {
       image = await loadAndCompressImageFromUrl(url,
           maxWidth: width, maxHeight: height);
+    } else if (base64Str != null) {
+      try {
+        final bytes = base64Decode(base64Str.split('base64,').last);
+        image = img.decodeImage(bytes);
+        if (image != null) {
+          image = img.copyResize(image,
+              width: width, height: height ?? image.height);
+        }
+      } catch (e) {
+        logger.e(e);
+      }
     }
-
     if (image != null) {
       return generator.image(image);
     }
