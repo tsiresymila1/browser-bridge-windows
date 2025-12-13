@@ -27,6 +27,7 @@ String getWebPath() {
 
 String getWebUrl() {
   final path = getWebPath().replaceAll(r'\', '/');
+  if(Platform.isAndroid) return "http://172.16.20.201/TLPTAB/";
   return "file://$path/index.html";
 }
 

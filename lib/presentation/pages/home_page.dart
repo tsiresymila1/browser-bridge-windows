@@ -158,7 +158,77 @@ class _HomePageState extends State<HomePage> {
     webViewController?.evaluateJavascript(source: jsEvent);
   }
 
-  @override
+  Widget buildContextMenuWrapper({
+    required BuildContext context,
+    required Widget child,
+  }) {
+    Future<void> openMenu(Offset position) async {
+      final overlay =
+      Overlay.of(context).context.findRenderObject() as RenderBox;
+
+      final value = await showMenu(
+        context: context,
+        elevation: 8,
+        position: RelativeRect.fromLTRB(
+          position.dx,
+          position.dy,
+          overlay.size.width - position.dx,
+          overlay.size.height - position.dy,
+        ),
+        items: const [
+          PopupMenuItem(
+            value: 'refresh',
+            child: Row(
+              children: [Icon(Icons.refresh), SizedBox(width: 8), Text("Refresh")],
+            ),
+          ),
+          PopupMenuItem(
+            value: 'clearCache',
+            child: Row(
+              children: [
+                Icon(Icons.delete_forever),
+                SizedBox(width: 8),
+                Text("Clear cache")
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            value: 'setting',
+            child: Row(
+              children: [Icon(Icons.settings), SizedBox(width: 8), Text("Settings")],
+            ),
+          ),
+        ],
+      );
+
+      if (value == 'setting') {
+        context.pushNamed("setting");
+      } else if (value == 'refresh') {
+        await webViewController?.reload();
+      } else if (value == 'clearCache') {
+        await clearCache();
+        await webViewController?.reload();
+      }
+    }
+    return Listener(
+      onPointerDown: (event) {
+        if (event.kind == PointerDeviceKind.mouse &&
+            event.buttons == kSecondaryMouseButton) {
+          openMenu(event.position);
+        }
+      },
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPressStart: (details) {
+          openMenu(details.globalPosition);
+        },
+        child: child,
+      ),
+    );
+  }
+
+
+    @override
   Widget build(BuildContext context) {
     return PrinterStreamListener(
       onPrinterFound: (printers) {
@@ -190,93 +260,8 @@ class _HomePageState extends State<HomePage> {
                   builder: (context2, state) {
                     final startUrl = state.config["web_url"] ??
                         getWebUrl();
-                    return Listener(
-                      onPointerDown: (event) async {
-                        if (event.kind == PointerDeviceKind.mouse &&
-                            event.buttons == kSecondaryMouseButton) {
-                          final overlay = Overlay.of(context)
-                              .context
-                              .findRenderObject() as RenderBox;
-                          final position = event.position;
-                          await showMenu(
-                            context: context,
-                            elevation: 8,
-                            position: RelativeRect.fromLTRB(
-                              position.dx,
-                              position.dy,
-                              overlay.size.width - position.dx,
-                              overlay.size.height - position.dy,
-                            ),
-                            items: [
-                              PopupMenuItem(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  value: 'refresh',
-                                  child: ConstrainedBox(
-                                    constraints:
-                                        const BoxConstraints(minWidth: 200),
-                                    child: const Row(
-                                      spacing: 8,
-                                      children: [
-                                        Icon(
-                                          Icons.refresh,
-                                          size: 24,
-                                        ),
-                                        Text("Refresh")
-                                      ],
-                                    ),
-                                  )),
-                              PopupMenuItem(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  value: 'clearCache',
-                                  child: ConstrainedBox(
-                                    constraints:
-                                    const BoxConstraints(minWidth: 200),
-                                    child: const Row(
-                                      spacing: 8,
-                                      children: [
-                                        Icon(
-                                          Icons.delete_forever,
-                                          size: 24,
-                                        ),
-                                        Text("Clear cache")
-                                      ],
-                                    ),
-                                  )),
-                              PopupMenuItem(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  value: 'setting',
-                                  child: ConstrainedBox(
-                                    constraints:
-                                        const BoxConstraints(minWidth: 200),
-                                    child: const Row(
-                                      spacing: 8,
-                                      children: [
-                                        Icon(
-                                          Icons.settings,
-                                          size: 24,
-                                        ),
-                                        Text("Settings")
-                                      ],
-                                    ),
-                                  )),
-                            ],
-                          ).then((value) {
-                            if (value == 'setting') {
-                              context.pushNamed("setting");
-                            } else if (value == 'refresh') {
-                              webViewController?.reload().then((res) => {});
-                            }else if(value == 'clearCache'){
-                              clearCache().then((res) => {
-                                webViewController?.reload().then((res) => {})
-                              });
-                            }
-                          });
-                        }
-                      },
-                      
+                    return buildContextMenuWrapper(
+                      context: context,
                       child: InAppWebView(
                         key: webViewKey,
                         contextMenu: contextMenu,
