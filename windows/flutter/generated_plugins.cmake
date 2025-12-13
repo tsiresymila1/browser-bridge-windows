@@ -5,11 +5,11 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   camera_windows
   dynamic_color
-  file_selector_windows
   flutter_inappwebview_windows
   flutter_thermal_printer
   permission_handler_windows
   screen_retriever_windows
+  universal_ble
   url_launcher_windows
   window_manager
 )

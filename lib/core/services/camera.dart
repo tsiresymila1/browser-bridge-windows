@@ -1,44 +1,39 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../models/args/args.dart';
 import 'service.dart';
 
 class CameraService extends JsService {
-  final ImagePicker _picker = ImagePicker();
-
   @override
   FutureOr call({required BuildContext context, required JsArgs jsArgs}) async {
     switch (jsArgs.method) {
-      case 'takePicture':
-        XFile? file = await _picker.pickImage(source: ImageSource.camera);
-        if (file != null) {
-          return {
-            "path": file.path,
-            "name": file.name,
-            "type": file.mimeType,
-            "size": await file.length(),
-            "base64":
-                "data:${file.mimeType ?? 'image/jpeg'};base64,${base64Encode(await file.readAsBytes())}",
-          };
-        }
-        break;
       case 'pickPhoto':
-        XFile? file = await _picker.pickImage(source: ImageSource.gallery);
-        if (file != null) {
-          return {
-            "path": file.path,
-            "name": file.name,
-            "type": file.mimeType,
-            "size": await file.length(),
-            "base64":
-                "data:${file.mimeType ?? 'image/jpeg'};base64,${base64Encode(await file.readAsBytes())}",
-          };
-        }
-        break;
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          withData: true,
+        );
+
+        if (result == null || result.files.isEmpty) return null;
+
+        final file = result.files.first;
+        final bytes = file.bytes!;
+
+        return {
+          "path": file.path,
+          "name": file.name,
+          "type": file.extension != null
+              ? "image/${file.extension}"
+              : "image/jpeg",
+          "size": bytes.length,
+          "base64":
+          "data:image/${file.extension ?? 'jpeg'};base64,${base64Encode(bytes)}",
+        };
+
       default:
         return null;
     }
