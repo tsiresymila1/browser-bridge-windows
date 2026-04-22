@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:adaptive_dialog/adaptive_dialog.dart';
-import 'package:browser_bridge/core/util/camera_delegate.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,7 +27,6 @@ Future<void> main() async {
   // ---------------- WINDOWS ONLY ----------------
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
     await windowManager.ensureInitialized();
-    WindowsCameraDelegate.register();
 
     const windowOptions = WindowOptions(
       title: "Browser bridge",

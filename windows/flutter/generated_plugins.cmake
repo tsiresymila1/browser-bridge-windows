@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  camera_windows
   dynamic_color
   flutter_inappwebview_windows
   flutter_thermal_printer

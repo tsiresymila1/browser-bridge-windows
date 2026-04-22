@@ -11,8 +11,6 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constant.dart';
-import '../../core/services/camera.dart';
-import '../../core/services/file.dart';
 import '../../core/services/printer.dart';
 import '../../core/util/log.dart';
 import '../../presentation/blocs/setting/setting_bloc.dart';
@@ -110,8 +108,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _registerServices(BuildContext context) async {
     final services = {
-      "Camera": CameraService(),
-      "File": FileService(),
       "Printer": PrinterService(),
     };
 
