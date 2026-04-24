@@ -75,6 +75,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   InAppWebViewSettings _getWebViewSettings(String webPath) {
+    logger.i(webPath);
     return InAppWebViewSettings(
         supportMultipleWindows: true,
         javaScriptCanOpenWindowsAutomatically: true,
@@ -103,7 +104,11 @@ class _HomePageState extends State<HomePage> {
         verticalScrollbarThumbColor: Colors.transparent,
         isInspectable: true,
         disableContextMenu: true,
-        useHybridComposition: false);
+        useHybridComposition: false,
+
+
+
+    );
   }
 
   Future<void> _registerServices(BuildContext context) async {
@@ -194,11 +199,20 @@ class _HomePageState extends State<HomePage> {
               children: [Icon(Icons.settings), SizedBox(width: 8), Text("Settings")],
             ),
           ),
+          PopupMenuItem(
+            value: 'inspect',
+            child: Row(
+              children: [Icon(Icons.settings), SizedBox(width: 8), Text("Inspect")],
+            ),
+          ),
         ],
       );
 
       if (value == 'setting') {
         context.pushNamed("setting");
+      }
+      else if (value == 'inspect') {
+        await webViewController?.openDevTools();
       } else if (value == 'refresh') {
         await webViewController?.reload();
       } else if (value == 'clearCache') {
@@ -270,8 +284,8 @@ class _HomePageState extends State<HomePage> {
                         onWebViewCreated: (controller) async {
                           webViewController = controller;
                           await _registerServices(context);
-                          await controller
-                              .requestFocusNodeHref();
+                          // await controller
+                          //     .requestFocusNodeHref();
                         },
                         onLoadStart: (_, __) =>
                             setState(() => _isLoading = true),
@@ -283,6 +297,8 @@ class _HomePageState extends State<HomePage> {
                           """);
                         },
                         onReceivedError: (ctr, req, error) async {
+                          logger.e(error.description);
+                          logger.e(error.type);
                           if (req.isForMainFrame ?? false) {
                             final errorHtml = await rootBundle.loadString(
                               Assets.appError,
@@ -353,13 +369,14 @@ class _HomePageState extends State<HomePage> {
                         state.config["web_path"] ?? getWebPath(),
                       ),
                     );
+                    logger.i(newUrl);
                     webViewController?.loadUrl(
                       urlRequest: URLRequest(url: WebUri(newUrl)),
                     );
                   },
                 ),
-                if (_isLoading)
-                  const Center(child: CircularProgressIndicator()),
+                 if (_isLoading)
+                   const Center(child: CircularProgressIndicator()),
                 if (_progress < 1)
                   Positioned(
                     bottom: 0,

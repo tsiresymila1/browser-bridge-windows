@@ -30,7 +30,6 @@ class _PrinterStreamListenerState extends State<PrinterStreamListener> {
     await _flutterThermalPrinterPlugin.getPrinters(
       connectionTypes: [
         ConnectionType.USB,
-        ConnectionType.BLE,
         ConnectionType.NETWORK,
       ],
     );

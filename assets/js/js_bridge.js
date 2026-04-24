@@ -216,3 +216,5 @@ var WebThermalPrinter = {
         });
     }
 };
+
+console.log(">>> JS Bridge injected2!");
